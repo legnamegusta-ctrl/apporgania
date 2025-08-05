@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Cliente - Orgânia Fertilizantes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- jsPDF Libraries for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Header -->
+    <nav class="bg-white shadow-lg border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <img src="logo.png" alt="Orgânia Logo" class="h-10 w-auto">
+                    <h1 class="ml-4 text-xl font-bold text-gray-800">Dashboard Cliente</h1>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Property Selector -->
+                    <div class="flex items-center space-x-2">
+                        <label for="propertySelect" class="text-sm font-medium text-gray-700">Propriedade:</label>
+                        <select id="propertySelect" class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Date Filters -->
+                    <div class="flex items-center space-x-2">
+                        <label for="dateFrom" class="text-sm font-medium text-gray-700">De:</label>
+                        <input type="date" id="dateFrom" class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <label for="dateTo" class="text-sm font-medium text-gray-700">Até:</label>
+                        <input type="date" id="dateTo" class="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    
+                    <!-- PDF Generation Button -->
+                    <button id="generatePdfBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Gerar PDF</span>
+                    </button>
+                    
+                    <!-- Logout Button -->
+                    <button id="logoutBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sair</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Welcome Section -->
+        <div class="mb-8">
+            <h2 id="welcomeMessage" class="text-3xl font-bold text-gray-900 mb-2">Carregando...</h2>
+            <p id="summaryMessage" class="text-gray-600">Carregando informações da sua propriedade...</p>
+        </div>
+
+        <!-- KPI Cards -->
+        <div id="kpiCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-map text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Área Total</p>
+                        <p id="totalAreaStat" class="text-2xl font-bold text-gray-900">...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-seedling text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Talhões Ativos</p>
+                        <p id="activePlotsStat" class="text-2xl font-bold text-gray-900">...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                        <i class="fas fa-calendar-check text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Atividades no Mês</p>
+                        <p id="activitiesMonthStat" class="text-2xl font-bold text-gray-900">...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-chart-line text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Produtividade</p>
+                        <p id="productivityStat" class="text-2xl font-bold text-gray-900">...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6">
+                    <button class="tab-btn py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors border-green-600 text-green-600" 
+                            data-tab-target="activities">
+                        <i class="fas fa-list-alt mr-2"></i>Movimentações na Lavoura
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Contents -->
+            <div class="p-6">
+                <!-- Activities Tab -->
+                <div id="activities-content" class="tab-content">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Histórico de Atividades</h3>
+                        <div class="text-sm text-gray-500">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Mostrando atividades do período selecionado
+                        </div>
+                    </div>
+                    
+                    <div id="farmActivities">
+                        <div id="activitiesList" class="space-y-4">
+                            <!-- Activities will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Details Modal -->
+    <div id="activityDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                    <h3 id="activityModalTitle" class="text-xl font-bold text-gray-900">Detalhes da Atividade</h3>
+                    <button id="closeActivityDetailsModalBtn" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="p-6">
+                    <!-- Basic Information -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Atividade</label>
+                            <p id="activityModalType" class="text-gray-900 font-semibold"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <div id="activityModalStatus"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Local</label>
+                            <p id="activityModalLocation" class="text-gray-900"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                            <p id="activityModalDate" class="text-gray-900"></p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
+                            <p id="activityModalResponsible" class="text-gray-900"></p>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                        <p id="activityModalDescription" class="text-gray-700 bg-gray-50 p-4 rounded-lg"></p>
+                    </div>
+
+                    <!-- Specific Details -->
+                    <div id="activityModalDetails" class="mb-6">
+                        <!-- Specific details will be loaded here -->
+                    </div>
+
+                    <!-- Photos -->
+                    <div id="activityModalPhotos">
+                        <!-- Photos will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox Modal -->
+    <div id="imageLightboxModal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-60">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="relative max-w-4xl max-h-full">
+                <button id="closeLightboxBtn" class="absolute top-4 right-4 text-white hover:text-gray-300 focus:outline-none z-10">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+                <img id="lightboxImage" src="/placeholder.svg" alt="Foto ampliada" class="max-w-full max-h-screen object-contain rounded-lg">
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Progress Modal -->
+    <div id="pdfProgressModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                <div class="text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-file-pdf text-4xl text-red-600 mb-2"></i>
+                        <h3 class="text-lg font-semibold text-gray-900">Gerando Relatório PDF</h3>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="pdfProgress" class="bg-green-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <p id="pdfProgressText" class="text-sm text-gray-600">Preparando dados...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2">
+        <!-- Toast notifications will be inserted here -->
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { initClienteDashboard } from './js/pages/dashboard-cliente.js';
+        import { auth } from './js/config/firebase.js';
+        import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.6.0/firebase-auth.js';
+        import { showToast } from './js/services/ui.js';
+
+        // Auth state listener
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('Cliente Dashboard: Usuário autenticado:', user.uid);
+                initClienteDashboard(user.uid, 'cliente');
+            } else {
+                console.log('Cliente Dashboard: Usuário não autenticado, redirecionando...');
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                showToast('Logout realizado com sucesso!', 'success');
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Erro no logout:', error);
+                showToast('Erro ao fazer logout. Tente novamente.', 'error');
+            }
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
